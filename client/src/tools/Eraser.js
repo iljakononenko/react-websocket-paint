@@ -2,8 +2,8 @@ import Tool from "./Tool";
 import toolState from "../store/toolState";
 
 export default class Eraser extends Tool{
-    constructor(canvas) {
-        super(canvas);
+    constructor(canvas, socket, sessionId) {
+        super(canvas, socket, sessionId);
         this.listen()
     }
 
@@ -15,6 +15,13 @@ export default class Eraser extends Tool{
 
     mouseUpHandler(e) {
         this.mouseDown = false
+        this.socket.send(JSON.stringify({
+            method: 'draw',
+            id: this.sessionId,
+            figure: {
+                type: 'finish',
+            }
+        }))
     }
 
     mouseDownHandler(e) {
@@ -25,15 +32,24 @@ export default class Eraser extends Tool{
 
     mouseMoveHandler(e) {
         if (this.mouseDown) {
-            this.draw(e.pageX - e.target.offsetLeft, e.pageY - e.target.offsetTop)
+            // this.draw(e.pageX - e.target.offsetLeft, e.pageY - e.target.offsetTop)
+            this.socket.send(JSON.stringify({
+                method: 'draw',
+                id: this.sessionId,
+                figure: {
+                    type: 'eraser',
+                    x: e.pageX - e.target.offsetLeft,
+                    y: e.pageY - e.target.offsetTop
+                }
+            }))
         }
     }
 
-    draw(x, y) {
-        this.ctx.lineTo(x, y)
-        let previousStrokeStyle = this.ctx.strokeStyle
-        this.ctx.strokeStyle = "white";
-        this.ctx.stroke()
-        this.ctx.strokeStyle = previousStrokeStyle;
+    static draw(ctx, x, y) {
+        ctx.lineTo(x, y)
+        let previousStrokeStyle = ctx.strokeStyle
+        ctx.strokeStyle = "white";
+        ctx.stroke()
+        ctx.strokeStyle = previousStrokeStyle;
     }
 }
